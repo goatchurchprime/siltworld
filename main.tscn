@@ -1,0 +1,268 @@
+[gd_scene load_steps=43 format=3 uid="uid://br3bss6kac8pa"]
+
+[ext_resource type="Script" path="res://main.gd" id="1_cagca"]
+[ext_resource type="Texture2D" uid="uid://cc0nte5jo30nw" path="res://skymap2.jpg" id="2_8tx6u"]
+[ext_resource type="PackedScene" uid="uid://dd35twe7yvkqf" path="res://FlatDisplay.tscn" id="3_o8mx1"]
+[ext_resource type="AudioStream" uid="uid://bsjqi4woew17c" path="res://sounds/click.wav" id="4_db5t8"]
+[ext_resource type="Script" path="res://HandJoints.gd" id="4_eaqi8"]
+[ext_resource type="PackedScene" uid="uid://ctltchlf2j2r4" path="res://addons/xr-simulator/XRSimulator.tscn" id="4_pcb8h"]
+[ext_resource type="Script" path="res://tapspark.gd" id="5_h5o8j"]
+[ext_resource type="Script" path="res://PointShader.gd" id="6_yro76"]
+[ext_resource type="Shader" path="res://pointshader.gdshader" id="7_y45hs"]
+[ext_resource type="Shader" path="res://magictinsel.gdshader" id="10_v7fox"]
+
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_hftad"]
+panorama = ExtResource("2_8tx6u")
+
+[sub_resource type="Sky" id="Sky_tsis2"]
+sky_material = SubResource("PanoramaSkyMaterial_hftad")
+
+[sub_resource type="Environment" id="Environment_0xu52"]
+background_mode = 2
+sky = SubResource("Sky_tsis2")
+tonemap_mode = 2
+volumetric_fog_emission = Color(0, 0.784314, 0, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wnci2"]
+albedo_color = Color(1, 0.121569, 0.121569, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_d0w3a"]
+material = SubResource("StandardMaterial3D_wnci2")
+size = Vector3(0.02, 0.02, 0.05)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_p0287"]
+albedo_color = Color(0.00392157, 1, 0.0117647, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_fmqho"]
+material = SubResource("StandardMaterial3D_p0287")
+size = Vector3(0.02, 0.02, 0.05)
+
+[sub_resource type="QuadMesh" id="QuadMesh_eslsg"]
+size = Vector2(0.8, 0.5)
+center_offset = Vector3(0, 0.05, 0)
+
+[sub_resource type="ViewportTexture" id="ViewportTexture_46vof"]
+viewport_path = NodePath("XROrigin3D/HandJoints/FrontOfPlayer/FlatDisplayMesh/SubViewport")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6gabm"]
+resource_local_to_scene = true
+albedo_color = Color(0, 0.615686, 0.619608, 1)
+albedo_texture = SubResource("ViewportTexture_46vof")
+
+[sub_resource type="SphereMesh" id="SphereMesh_65vmt"]
+radius = 0.02
+height = 0.04
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_brx0b"]
+albedo_color = Color(1, 1, 0, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_yct16"]
+size = Vector3(0.01, 0.07, 0.01)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_g60ck"]
+albedo_color = Color(0.992157, 0.0117647, 0.0666667, 1)
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_rm4v2"]
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_bkxwk"]
+seamless = true
+noise = SubResource("FastNoiseLite_rm4v2")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3vxx6"]
+albedo_color = Color(0.466667, 0.247059, 0.196078, 1)
+albedo_texture = SubResource("NoiseTexture2D_bkxwk")
+uv1_scale = Vector3(4, 4, 4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_5clia"]
+material = SubResource("StandardMaterial3D_3vxx6")
+size = Vector3(10, 0.01, 10)
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_s7ov1"]
+velocity_pivot = Vector3(0, 1, 0)
+direction = Vector3(1, 1, 0)
+spread = 180.0
+initial_velocity_min = 0.1
+initial_velocity_max = 0.1
+gravity = Vector3(0, 0, 0)
+turbulence_enabled = true
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_01e43"]
+billboard_mode = 2
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_ve1o1"]
+material = SubResource("StandardMaterial3D_01e43")
+size = Vector2(0.01, 0.01)
+
+[sub_resource type="QuadMesh" id="QuadMesh_pe2h3"]
+size = Vector2(0.2, 0.2)
+subdivide_width = 3
+subdivide_depth = 3
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_hm6ix"]
+noise_type = 2
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_41oy1"]
+seamless = true
+as_normal_map = true
+noise = SubResource("FastNoiseLite_hm6ix")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_nmd4x"]
+render_priority = 0
+shader = ExtResource("7_y45hs")
+shader_parameter/point_scale = 14.0
+shader_parameter/colormixweight = 0.5
+shader_parameter/position_noise = SubResource("NoiseTexture2D_41oy1")
+
+[sub_resource type="TorusMesh" id="TorusMesh_ihr40"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_um3xr"]
+metallic = 1.0
+roughness = 0.0
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_kh1d1"]
+particle_flag_align_y = true
+angle_max = 180.0
+inherit_velocity_ratio = 0.02
+spread = 180.0
+initial_velocity_min = 0.02
+initial_velocity_max = 0.02
+gravity = Vector3(0, 0, 0)
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_1ntmg"]
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_wu078"]
+seamless = true
+as_normal_map = true
+noise = SubResource("FastNoiseLite_1ntmg")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_d2e6a"]
+render_priority = 0
+shader = ExtResource("10_v7fox")
+shader_parameter/albedo = null
+shader_parameter/point_size = 1.0
+shader_parameter/position_noise = SubResource("NoiseTexture2D_wu078")
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_2mr64"]
+material = SubResource("ShaderMaterial_d2e6a")
+size = Vector2(0, 0)
+subdivide_depth = 5
+
+[node name="Main" type="Node3D"]
+script = ExtResource("1_cagca")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.972307, 0.231448, -0.0324247, -0.168036, 0.788752, 0.591299, 0.16243, -0.569476, 0.8058, 0, 4.78147, -0.461351)
+light_energy = 0.1
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_0xu52")
+
+[node name="XROrigin3D" type="XROrigin3D" parent="."]
+
+[node name="XRCamera3D" type="XRCamera3D" parent="XROrigin3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
+
+[node name="SpotLight3DRight" type="SpotLight3D" parent="XROrigin3D/XRCamera3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.167027, 0, 0)
+light_volumetric_fog_energy = 5.651
+spot_attenuation = 1.18921
+spot_angle = 20.0
+spot_angle_attenuation = 0.183011
+
+[node name="SpotLight3Left" type="SpotLight3D" parent="XROrigin3D/XRCamera3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.167, 0, 0)
+spot_attenuation = 1.18921
+spot_angle = 20.0
+spot_angle_attenuation = 0.183011
+
+[node name="XRController3DLeft" type="XRController3D" parent="XROrigin3D"]
+tracker = &"left_hand"
+pose = &"aim"
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="XROrigin3D/XRController3DLeft"]
+visible = false
+mesh = SubResource("BoxMesh_d0w3a")
+
+[node name="XRController3DRight" type="XRController3D" parent="XROrigin3D"]
+tracker = &"right_hand"
+pose = &"grip"
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="XROrigin3D/XRController3DRight"]
+visible = false
+mesh = SubResource("BoxMesh_fmqho")
+
+[node name="HandJoints" type="Node3D" parent="XROrigin3D"]
+script = ExtResource("4_eaqi8")
+
+[node name="Joints3D" type="Node3D" parent="XROrigin3D/HandJoints"]
+
+[node name="FrontOfPlayer" type="Node3D" parent="XROrigin3D/HandJoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65802, -0.491668)
+
+[node name="FlatDisplayMesh" type="MeshInstance3D" parent="XROrigin3D/HandJoints/FrontOfPlayer"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.169554, -0.0442287)
+mesh = SubResource("QuadMesh_eslsg")
+skeleton = NodePath("../../../..")
+surface_material_override/0 = SubResource("StandardMaterial3D_6gabm")
+
+[node name="SubViewport" type="SubViewport" parent="XROrigin3D/HandJoints/FrontOfPlayer/FlatDisplayMesh"]
+size = Vector2i(800, 500)
+
+[node name="FlatDisplay" parent="XROrigin3D/HandJoints/FrontOfPlayer/FlatDisplayMesh/SubViewport" instance=ExtResource("3_o8mx1")]
+
+[node name="Joints2D" type="Node3D" parent="XROrigin3D/HandJoints/FrontOfPlayer"]
+
+[node name="FingerButton" type="MeshInstance3D" parent="XROrigin3D/HandJoints/FrontOfPlayer"]
+mesh = SubResource("SphereMesh_65vmt")
+skeleton = NodePath("../..")
+surface_material_override/0 = SubResource("StandardMaterial3D_brx0b")
+
+[node name="Touched" type="MeshInstance3D" parent="XROrigin3D/HandJoints/FrontOfPlayer/FingerButton"]
+visible = false
+mesh = SubResource("BoxMesh_yct16")
+surface_material_override/0 = SubResource("StandardMaterial3D_g60ck")
+
+[node name="XRSimulator" parent="XROrigin3D" instance=ExtResource("4_pcb8h")]
+xr_origin = NodePath("..")
+
+[node name="MeshInstance3DFloor" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_5clia")
+skeleton = NodePath("../XROrigin3D")
+
+[node name="GPUParticles3D" type="GPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.18932, 1.7242, -0.382231)
+visible = false
+amount = 980
+lifetime = 1.9
+trail_lifetime = 1.87
+process_material = SubResource("ParticleProcessMaterial_s7ov1")
+draw_pass_1 = SubResource("PlaneMesh_ve1o1")
+
+[node name="AudioStreamPlayer3D" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("4_db5t8")
+attenuation_model = 1
+bus = &"test"
+
+[node name="CollisionSpots" type="Node3D" parent="."]
+script = ExtResource("5_h5o8j")
+
+[node name="PointShader" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1, 1.8, -0.5)
+script = ExtResource("6_yro76")
+
+[node name="PointMesh" type="MeshInstance3D" parent="PointShader"]
+mesh = SubResource("QuadMesh_pe2h3")
+surface_material_override/0 = SubResource("ShaderMaterial_nmd4x")
+
+[node name="ShiinyTorus" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1.73205, -0.5, 0, 1, 0.866025, 0, 0.479736, -3.0724)
+mesh = SubResource("TorusMesh_ihr40")
+surface_material_override/0 = SubResource("StandardMaterial3D_um3xr")
+
+[node name="GPUParticles3D2" type="GPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.30525, 0)
+lifetime = 3.0
+process_material = SubResource("ParticleProcessMaterial_kh1d1")
+draw_pass_1 = SubResource("PlaneMesh_2mr64")
+
+[connection signal="button_pressed" from="XROrigin3D/XRController3DLeft" to="." method="_on_xr_controller_3d_left_button_pressed"]

@@ -1,0 +1,17 @@
+*.o
+*.os
+.import/
+*.import
+android/
+*.dblite
+*.exp
+*.lib
+.godot/
+*.obj
+*.TMP
+*.import
+*.ipynb_checkpoints
+__pycache__
+logs
+Thumbs.db
+*result*
