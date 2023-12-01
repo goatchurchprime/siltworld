@@ -227,6 +227,7 @@ func _process(delta):
 	var touching = (d < 0.03)
 	if !($FrontOfPlayer/FingerButton/Touched.visible) and touching:
 		fingertiptouchbutton()
+		$FrontOfPlayer/FingerButton/AudioStreamPlayer3D.play()
 	$FrontOfPlayer/FingerButton/Touched.visible = touching
 
 var flatlefthandjointsfromwrist = [

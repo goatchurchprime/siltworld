@@ -1,27 +1,29 @@
 shader_type spatial;
-render_mode skip_vertex_transform,blend_mix,depth_draw_opaque,cull_disabled,diffuse_burley,specular_schlick_ggx,unshaded;
+render_mode skip_vertex_transform, blend_mix, depth_draw_opaque, cull_disabled, diffuse_burley, specular_schlick_ggx,unshaded;
 
 uniform vec4 albedo;
 uniform float point_size;
 uniform sampler2D position_noise;
 
-const float streamrad = 3.0; 
-const float sparkrad = 0.2; 
-const float sparktrailrad = 0.08; 
+uniform float streamrad = 3.0; 
+uniform float sparkrad = 0.2; 
+uniform float sparktrailrad = 0.08; 
+
+varying float phase; 
 
 void vertex() {
-	float growtimefac = COLOR.r; 
-	float timefac = COLOR.r; 
+	float growtimefac = INSTANCE_CUSTOM.y; 
+	float timefac = INSTANCE_CUSTOM.y; 
 	float springoutfac = 1.0 - pow(1.0 - timefac, 3.0); 
 	float noisetimefac = (timefac*timefac*0.5 - timefac + 1.0)*0.09; 
 	float UVycollapsed = (UV.y > 0.5 ? 0.6 : UV.y*1.0); 
 	if (UV.y < 0.3)  UVycollapsed *= 1.2;  
 
 	float noisedisplacement = springoutfac*25.0*pow(UVycollapsed, 3.0); 
-	float fadetimefac = COLOR.g; 
+	float fadetimefac = 1.0; 
 
 	vec2 streamvec = normalize((MODELVIEW_MATRIX * vec4(0.0, 1.0, 0.0, 0.0)).xy); 
-	float noiserowdisp = fract(streamvec.x*100.0); 
+	float noiserowdisp = fract((MODEL_MATRIX * vec4(0.0, 1.0, 0.0, 0.0)).z*100.0); 
 	float noiserow = min(UV.y, 0.6) + 0.2*noiserowdisp; 
 	float prevnoiserow = max(noiserow - 0.2, 0.0); 
 	vec4 normnoise = texture(position_noise, vec2(noisetimefac, noiserow)); 
@@ -37,11 +39,12 @@ void vertex() {
 	} else {
 		VERTEX.xy += (UV.x - 0.5)*perpstreamvec*sparktrailrad; 
 	}
+	phase = INSTANCE_CUSTOM.y;
+
 }
 
 void fragment() {
-
-/*	if ((UV.y >= 0.6) && (UV.y <= 0.8))
+	if ((UV.y >= 0.6) && (UV.y <= 0.8))
 		discard; 
 	bool bspark = (UV.y >= 0.8); 
 	float dd = length(vec2(UV.x*2.0 - 1.0, 
@@ -53,7 +56,6 @@ void fragment() {
 
 	float fadeperiod = UV.y*UV.y*0.4 + 0.01;  
 	fadeperiod = UV.y*0.5;  
-	if (COLOR.r > 1.0 - fadeperiod)
-		ALPHA *= (1.0 - COLOR.r)/fadeperiod; 
-*/
+	if (phase > 1.0 - fadeperiod)
+		ALPHA *= (1.0 - phase)/fadeperiod; 
 }

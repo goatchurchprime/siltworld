@@ -123,7 +123,14 @@ func _process(delta):
 		$GPUParticles3D.global_position = $XROrigin3D.transform * xr_interface.get_hand_joint_position(0, OpenXRInterface.HAND_JOINT_LITTLE_TIP)
 		readprocesshandjoints()
 		var collidedhandjoints = detectcollidedhandjoints()
-		$CollisionSpots.sparkcollisions(collidedhandjoints, handjointpositions, handjointfilteredpositions)
+		var tinselvec = $CollisionSpots.sparkcollisions(collidedhandjoints, handjointpositions, handjointfilteredpositions)
+		var gtinsel = $TinselBody/GPUParticles3Dtinsel
+		if tinselvec != null and not gtinsel.emitting:
+			$TinselBody.position = handjointpositions[OpenXRInterface.HAND_JOINT_MIDDLE_TIP*2 + 0]
+			$TinselBody.linear_velocity = tinselvec
+			gtinsel.emitting = true
+			
+		
 		#for i in range($CollisionSpots.get_child_count()):
 		#	var spot = get_node("CollisionSpots/Spot%d"%i)
 		#	spot.visible = (i*2 < len(collidedhandjoints))

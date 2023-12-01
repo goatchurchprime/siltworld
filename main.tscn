@@ -1,4 +1,4 @@
-[gd_scene load_steps=43 format=3 uid="uid://br3bss6kac8pa"]
+[gd_scene load_steps=55 format=3 uid="uid://br3bss6kac8pa"]
 
 [ext_resource type="Script" path="res://main.gd" id="1_cagca"]
 [ext_resource type="Texture2D" uid="uid://cc0nte5jo30nw" path="res://skymap2.jpg" id="2_8tx6u"]
@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://HandJoints.gd" id="4_eaqi8"]
 [ext_resource type="PackedScene" uid="uid://ctltchlf2j2r4" path="res://addons/xr-simulator/XRSimulator.tscn" id="4_pcb8h"]
 [ext_resource type="Script" path="res://tapspark.gd" id="5_h5o8j"]
+[ext_resource type="AudioStream" uid="uid://d16iuihmmd3xs" path="res://sounds/Velcro_01_audacity.wav" id="5_qinxx"]
 [ext_resource type="Script" path="res://PointShader.gd" id="6_yro76"]
 [ext_resource type="Shader" path="res://pointshader.gdshader" id="7_y45hs"]
 [ext_resource type="Shader" path="res://magictinsel.gdshader" id="10_v7fox"]
@@ -46,6 +47,7 @@ viewport_path = NodePath("XROrigin3D/HandJoints/FrontOfPlayer/FlatDisplayMesh/Su
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6gabm"]
 resource_local_to_scene = true
+cull_mode = 2
 albedo_color = Color(0, 0.615686, 0.619608, 1)
 albedo_texture = SubResource("ViewportTexture_46vof")
 
@@ -119,6 +121,8 @@ shader_parameter/position_noise = SubResource("NoiseTexture2D_41oy1")
 metallic = 1.0
 roughness = 0.0
 
+[sub_resource type="SphereShape3D" id="SphereShape3D_mwyyj"]
+
 [sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_kh1d1"]
 particle_flag_align_y = true
 angle_max = 180.0
@@ -127,6 +131,7 @@ spread = 180.0
 initial_velocity_min = 0.02
 initial_velocity_max = 0.02
 gravity = Vector3(0, 0, 0)
+hue_variation_max = 1.0
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_1ntmg"]
 
@@ -140,6 +145,9 @@ render_priority = 0
 shader = ExtResource("10_v7fox")
 shader_parameter/albedo = null
 shader_parameter/point_size = 1.0
+shader_parameter/streamrad = 1.0
+shader_parameter/sparkrad = 0.1
+shader_parameter/sparktrailrad = 0.04
 shader_parameter/position_noise = SubResource("NoiseTexture2D_wu078")
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_2mr64"]
@@ -147,12 +155,64 @@ material = SubResource("ShaderMaterial_d2e6a")
 size = Vector2(0, 0)
 subdivide_depth = 5
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_qximi"]
+size = Vector3(10, 1, 10)
+
+[sub_resource type="Curve" id="Curve_0vw2q"]
+_data = [Vector2(0, 0.984988), 0.0, 0.0, 0, 0, Vector2(0.98659, 0), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_toorp"]
+curve = SubResource("Curve_0vw2q")
+
+[sub_resource type="Curve" id="Curve_fgc8a"]
+_data = [Vector2(0.0325671, 0.234411), 0.0, 0.0, 0, 0, Vector2(0.522988, 0.439569), 0.0, 0.0, 0, 0, Vector2(1, 1), 0.0, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="CurveTexture" id="CurveTexture_lsdrr"]
+curve = SubResource("Curve_fgc8a")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_f5iym"]
+emission_shape = 6
+emission_ring_axis = Vector3(1, 0, 0)
+emission_ring_height = 0.0
+emission_ring_radius = 1.0
+emission_ring_inner_radius = 0.7
+spread = 0.0
+initial_velocity_min = 1.0
+initial_velocity_max = 1.0
+gravity = Vector3(0, 0, 0)
+scale_min = 3.0
+scale_max = 5.0
+scale_curve = SubResource("CurveTexture_lsdrr")
+color = Color(0.752941, 1, 0.00784314, 1)
+alpha_curve = SubResource("CurveTexture_toorp")
+turbulence_noise_scale = 1.0
+turbulence_influence_min = 0.01
+turbulence_influence_max = 0.01
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_k1ko2"]
+transparency = 3
+alpha_hash_scale = 1.0
+alpha_antialiasing_mode = 0
+vertex_color_use_as_albedo = true
+emission = Color(1, 1, 0, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_xl765"]
+material = SubResource("StandardMaterial3D_k1ko2")
+size = Vector3(0.02, 0.04, 0.02)
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_cnwuy"]
+
+[sub_resource type="NoiseTexture3D" id="NoiseTexture3D_f54mh"]
+noise = SubResource("FastNoiseLite_cnwuy")
+
 [node name="Main" type="Node3D"]
 script = ExtResource("1_cagca")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.972307, 0.231448, -0.0324247, -0.168036, 0.788752, 0.591299, 0.16243, -0.569476, 0.8058, 0, 4.78147, -0.461351)
-light_energy = 0.1
+shadow_enabled = true
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_0xu52")
@@ -166,13 +226,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.167027, 0, 0)
 light_volumetric_fog_energy = 5.651
 spot_attenuation = 1.18921
-spot_angle = 20.0
+spot_angle = 25.0
 spot_angle_attenuation = 0.183011
 
 [node name="SpotLight3Left" type="SpotLight3D" parent="XROrigin3D/XRCamera3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.167, 0, 0)
 spot_attenuation = 1.18921
-spot_angle = 20.0
+spot_angle = 25.0
 spot_angle_attenuation = 0.183011
 
 [node name="XRController3DLeft" type="XRController3D" parent="XROrigin3D"]
@@ -222,6 +282,9 @@ visible = false
 mesh = SubResource("BoxMesh_yct16")
 surface_material_override/0 = SubResource("StandardMaterial3D_g60ck")
 
+[node name="AudioStreamPlayer3D" type="AudioStreamPlayer3D" parent="XROrigin3D/HandJoints/FrontOfPlayer/FingerButton"]
+stream = ExtResource("5_qinxx")
+
 [node name="XRSimulator" parent="XROrigin3D" instance=ExtResource("4_pcb8h")]
 xr_origin = NodePath("..")
 
@@ -248,6 +311,7 @@ script = ExtResource("5_h5o8j")
 
 [node name="PointShader" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1, 1.8, -0.5)
+visible = false
 script = ExtResource("6_yro76")
 
 [node name="PointMesh" type="MeshInstance3D" parent="PointShader"]
@@ -259,10 +323,73 @@ transform = Transform3D(1, 0, 0, 0, 1.73205, -0.5, 0, 1, 0.866025, 0, 0.479736, 
 mesh = SubResource("TorusMesh_ihr40")
 surface_material_override/0 = SubResource("StandardMaterial3D_um3xr")
 
-[node name="GPUParticles3D2" type="GPUParticles3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.30525, 0)
+[node name="TinselBody" type="RigidBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.73451, -1.54059)
+gravity_scale = 0.4
+linear_velocity = Vector3(1, 0, -1)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TinselBody"]
+shape = SubResource("SphereShape3D_mwyyj")
+
+[node name="GPUParticles3Dtinsel" type="GPUParticles3D" parent="TinselBody"]
+emitting = false
+amount = 150
 lifetime = 3.0
+one_shot = true
 process_material = SubResource("ParticleProcessMaterial_kh1d1")
 draw_pass_1 = SubResource("PlaneMesh_2mr64")
+
+[node name="CollisionWalls" type="Node3D" parent="."]
+
+[node name="Floor" type="StaticBody3D" parent="CollisionWalls"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CollisionWalls/Floor"]
+shape = SubResource("BoxShape3D_qximi")
+
+[node name="Wall" type="StaticBody3D" parent="CollisionWalls"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 4, -5.5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CollisionWalls/Wall"]
+shape = SubResource("BoxShape3D_qximi")
+
+[node name="Wall2" type="StaticBody3D" parent="CollisionWalls"]
+transform = Transform3D(-4.37114e-08, 1, -4.37114e-08, 0, -4.37114e-08, -1, -1, -4.37114e-08, 1.91069e-15, 5.5, 4, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CollisionWalls/Wall2"]
+shape = SubResource("BoxShape3D_qximi")
+
+[node name="Wall3" type="StaticBody3D" parent="CollisionWalls"]
+transform = Transform3D(-4.37114e-08, 1, -4.37114e-08, 0, -4.37114e-08, -1, -1, -4.37114e-08, 1.91069e-15, -5.5, 4, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CollisionWalls/Wall3"]
+shape = SubResource("BoxShape3D_qximi")
+
+[node name="GPUParticles3D2" type="GPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0342484, 2.57414, 2.6726)
+amount = 12500
+lifetime = 3.0
+speed_scale = 0.5
+explosiveness = 0.5
+process_material = SubResource("ParticleProcessMaterial_f5iym")
+draw_passes = 2
+draw_pass_1 = SubResource("BoxMesh_xl765")
+draw_pass_2 = null
+
+[node name="GPUParticlesAttractorVectorField3D" type="GPUParticlesAttractorVectorField3D" parent="GPUParticles3D2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.34489, 0, -0.396912)
+visible = false
+texture = SubResource("NoiseTexture3D_f54mh")
+
+[node name="GPUParticlesAttractorSphere3D" type="GPUParticlesAttractorSphere3D" parent="GPUParticles3D2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.1226, 0.514691, 0.924217)
+strength = 3.0
+attenuation = 0.00377319
+
+[node name="GPUParticlesAttractorBox3D" type="GPUParticlesAttractorBox3D" parent="GPUParticles3D2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.87785, -0.490049, 0.322819)
+attenuation = 0.00754637
+directionality = 0.5
+size = Vector3(3, 3, 3)
 
 [connection signal="button_pressed" from="XROrigin3D/XRController3DLeft" to="." method="_on_xr_controller_3d_left_button_pressed"]
