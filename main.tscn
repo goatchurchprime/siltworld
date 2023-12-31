@@ -1,4 +1,4 @@
-[gd_scene load_steps=55 format=3 uid="uid://br3bss6kac8pa"]
+[gd_scene load_steps=63 format=3 uid="uid://br3bss6kac8pa"]
 
 [ext_resource type="Script" path="res://main.gd" id="1_cagca"]
 [ext_resource type="Texture2D" uid="uid://cc0nte5jo30nw" path="res://skymap2.jpg" id="2_8tx6u"]
@@ -9,8 +9,16 @@
 [ext_resource type="Script" path="res://tapspark.gd" id="5_h5o8j"]
 [ext_resource type="AudioStream" uid="uid://d16iuihmmd3xs" path="res://sounds/Velcro_01_audacity.wav" id="5_qinxx"]
 [ext_resource type="Script" path="res://PointShader.gd" id="6_yro76"]
+[ext_resource type="Script" path="res://addons/xr-autohandtracker/Autohands.gd" id="7_bkcai"]
+[ext_resource type="PackedScene" uid="uid://wttcx8722vps" path="res://handassets/xrtools/Hand_Glove_L.gltf" id="7_vrdjw"]
 [ext_resource type="Shader" path="res://pointshader.gdshader" id="7_y45hs"]
+[ext_resource type="Material" uid="uid://jhe5spy2he7w" path="res://handassets/xrtools/tacglovehand.material" id="8_dwgxt"]
+[ext_resource type="PackedScene" uid="uid://dgxy2gf5gk0h2" path="res://handassets/xrtools/Hand_Glove_R.gltf" id="9_cjltq"]
 [ext_resource type="Shader" path="res://magictinsel.gdshader" id="10_v7fox"]
+[ext_resource type="PackedScene" uid="uid://b2kwn8k5wsbxa" path="res://handassets/ovr/ovr_left_hand_model.glb" id="11_2wlfo"]
+[ext_resource type="Shader" path="res://vapour.gdshader" id="12_34yko"]
+[ext_resource type="Script" path="res://GPUParticles3D2.gd" id="12_xk75l"]
+[ext_resource type="PackedScene" uid="uid://ktm7k0co2o7l" path="res://addons/mqtt/mqtt.tscn" id="18_6jiio"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_hftad"]
 panorama = ExtResource("2_8tx6u")
@@ -165,14 +173,15 @@ point_count = 2
 [sub_resource type="CurveTexture" id="CurveTexture_toorp"]
 curve = SubResource("Curve_0vw2q")
 
-[sub_resource type="Curve" id="Curve_fgc8a"]
-_data = [Vector2(0.0325671, 0.234411), 0.0, 0.0, 0, 0, Vector2(0.522988, 0.439569), 0.0, 0.0, 0, 0, Vector2(1, 1), 0.0, 0.0, 0, 0]
-point_count = 3
+[sub_resource type="Curve" id="Curve_2m0hf"]
+_data = [Vector2(0.0325671, 0.929946), 0.0, 0.0, 0, 0, Vector2(1, 0.294457), 0.0, 0.0, 0, 0]
+point_count = 2
 
-[sub_resource type="CurveTexture" id="CurveTexture_lsdrr"]
-curve = SubResource("Curve_fgc8a")
+[sub_resource type="CurveTexture" id="CurveTexture_go5yk"]
+curve = SubResource("Curve_2m0hf")
 
 [sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_f5iym"]
+emission_shape_scale = Vector3(1, 1, 1.5)
 emission_shape = 6
 emission_ring_axis = Vector3(1, 0, 0)
 emission_ring_height = 0.0
@@ -182,25 +191,32 @@ spread = 0.0
 initial_velocity_min = 1.0
 initial_velocity_max = 1.0
 gravity = Vector3(0, 0, 0)
-scale_min = 3.0
-scale_max = 5.0
-scale_curve = SubResource("CurveTexture_lsdrr")
+scale_min = 0.0
+scale_max = 4.0
+scale_curve = SubResource("CurveTexture_go5yk")
 color = Color(0.752941, 1, 0.00784314, 1)
 alpha_curve = SubResource("CurveTexture_toorp")
 turbulence_noise_scale = 1.0
 turbulence_influence_min = 0.01
 turbulence_influence_max = 0.01
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_k1ko2"]
-transparency = 3
-alpha_hash_scale = 1.0
-alpha_antialiasing_mode = 0
-vertex_color_use_as_albedo = true
-emission = Color(1, 1, 0, 1)
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_wfmto"]
+render_priority = 0
+shader = ExtResource("12_34yko")
+shader_parameter/albedo = Color(1, 1, 1, 1)
+shader_parameter/point_size = 15.0
+shader_parameter/roughness = 1.0
+shader_parameter/metallic_texture_channel = null
+shader_parameter/specular = 0.5
+shader_parameter/metallic = 0.0
+shader_parameter/uv1_scale = Vector3(1, 1, 1)
+shader_parameter/uv1_offset = Vector3(0, 0, 0)
+shader_parameter/uv2_scale = Vector3(1, 1, 1)
+shader_parameter/uv2_offset = Vector3(0, 0, 0)
+shader_parameter/colormixweight = 0.05
 
-[sub_resource type="BoxMesh" id="BoxMesh_xl765"]
-material = SubResource("StandardMaterial3D_k1ko2")
-size = Vector3(0.02, 0.04, 0.02)
+[sub_resource type="PointMesh" id="PointMesh_m7w67"]
+material = SubResource("ShaderMaterial_wfmto")
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_cnwuy"]
 
@@ -211,7 +227,7 @@ noise = SubResource("FastNoiseLite_cnwuy")
 script = ExtResource("1_cagca")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(0.972307, 0.231448, -0.0324247, -0.168036, 0.788752, 0.591299, 0.16243, -0.569476, 0.8058, 0, 4.78147, -0.461351)
+transform = Transform3D(0.9208, -0.206001, -0.331196, 0.389986, 0.499705, 0.773438, 0.00617166, -0.841343, 0.540466, 0, 4.78147, -0.461351)
 shadow_enabled = true
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
@@ -224,6 +240,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
 
 [node name="SpotLight3DRight" type="SpotLight3D" parent="XROrigin3D/XRCamera3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.167027, 0, 0)
+visible = false
 light_volumetric_fog_energy = 5.651
 spot_attenuation = 1.18921
 spot_angle = 25.0
@@ -231,6 +248,7 @@ spot_angle_attenuation = 0.183011
 
 [node name="SpotLight3Left" type="SpotLight3D" parent="XROrigin3D/XRCamera3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.167, 0, 0)
+visible = false
 spot_attenuation = 1.18921
 spot_angle = 25.0
 spot_angle_attenuation = 0.183011
@@ -258,6 +276,7 @@ script = ExtResource("4_eaqi8")
 
 [node name="FrontOfPlayer" type="Node3D" parent="XROrigin3D/HandJoints"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65802, -0.491668)
+visible = false
 
 [node name="FlatDisplayMesh" type="MeshInstance3D" parent="XROrigin3D/HandJoints/FrontOfPlayer"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.169554, -0.0442287)
@@ -287,6 +306,27 @@ stream = ExtResource("5_qinxx")
 
 [node name="XRSimulator" parent="XROrigin3D" instance=ExtResource("4_pcb8h")]
 xr_origin = NodePath("..")
+
+[node name="Autohands" type="Node3D" parent="XROrigin3D"]
+script = ExtResource("7_bkcai")
+
+[node name="Hand_Glove_L" parent="XROrigin3D/Autohands" instance=ExtResource("7_vrdjw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.15933, -1.20719)
+
+[node name="Skeleton3D" parent="XROrigin3D/Autohands/Hand_Glove_L/Armature" index="0"]
+bones/8/position = Vector3(0.000474975, 0.031475, 0.000474975)
+bones/8/rotation = Quaternion(0.014475, -0.011525, -0.134525, 0.990475)
+bones/9/position = Vector3(0.000474975, 0.027475, 0.000474975)
+bones/25/position = Vector3(0.030475, 0.067475, -0.042525)
+
+[node name="mesh_Glove_L" parent="XROrigin3D/Autohands/Hand_Glove_L/Armature/Skeleton3D" index="0"]
+material_override = ExtResource("8_dwgxt")
+
+[node name="Hand_Glove_R" parent="XROrigin3D/Autohands" instance=ExtResource("9_cjltq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.416537, 1.12614, -1.26018)
+
+[node name="ovr_left_hand_model" parent="XROrigin3D/Autohands" instance=ExtResource("11_2wlfo")]
+visible = false
 
 [node name="MeshInstance3DFloor" type="MeshInstance3D" parent="."]
 mesh = SubResource("BoxMesh_5clia")
@@ -366,15 +406,14 @@ transform = Transform3D(-4.37114e-08, 1, -4.37114e-08, 0, -4.37114e-08, -1, -1, 
 shape = SubResource("BoxShape3D_qximi")
 
 [node name="GPUParticles3D2" type="GPUParticles3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0342484, 2.57414, 2.6726)
-amount = 12500
+transform = Transform3D(1, 0, 0, 0, 0.918046, 0.396475, 0, -0.396475, 0.918046, -2.70189, 2.16711, -1.60561)
+visible = false
+amount = 22500
 lifetime = 3.0
-speed_scale = 0.5
 explosiveness = 0.5
 process_material = SubResource("ParticleProcessMaterial_f5iym")
-draw_passes = 2
-draw_pass_1 = SubResource("BoxMesh_xl765")
-draw_pass_2 = null
+draw_pass_1 = SubResource("PointMesh_m7w67")
+script = ExtResource("12_xk75l")
 
 [node name="GPUParticlesAttractorVectorField3D" type="GPUParticlesAttractorVectorField3D" parent="GPUParticles3D2"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.34489, 0, -0.396912)
@@ -392,4 +431,10 @@ attenuation = 0.00754637
 directionality = 0.5
 size = Vector3(3, 3, 3)
 
+[node name="MQTT" parent="." instance=ExtResource("18_6jiio")]
+
 [connection signal="button_pressed" from="XROrigin3D/XRController3DLeft" to="." method="_on_xr_controller_3d_left_button_pressed"]
+[connection signal="button_pressed" from="XROrigin3D/XRController3DRight" to="XROrigin3D/Autohands" method="_on_xr_controller_3d_right_button_pressed"]
+[connection signal="broker_connection_failed" from="MQTT" to="." method="_on_mqtt_broker_connection_failed"]
+
+[editable path="XROrigin3D/Autohands/Hand_Glove_L"]

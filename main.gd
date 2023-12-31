@@ -22,6 +22,10 @@ func _ready():
 		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 
 		$XROrigin3D/HandJoints.set_xr_interface(xr_interface)
+		$XROrigin3D/Autohands.set_xr_interface(xr_interface)
+	#$MQTT.connect_to_broker("ming.local")
+	#$MQTT.connect_to_broker("192.168.8.100")
+
 
 	for j in range(OpenXRInterface.HAND_JOINT_MAX):
 		handjointpositions.append(null)
@@ -43,6 +47,8 @@ func _ready():
 		
 func _on_xr_controller_3d_left_button_pressed(name):
 	print("_on_xr_controller_3d_left_button_pressed ", name)
+
+
 
 
 const filtervalue = 0.1
@@ -152,3 +158,7 @@ func _process(delta):
 		if t != null:
 			Graph.addsample(t*20)
 
+
+
+func _on_mqtt_broker_connection_failed():
+	print("****** Broker connection failed")

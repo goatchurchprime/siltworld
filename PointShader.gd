@@ -13,7 +13,7 @@ func _ready():
 					st.add_vertex(p)
 		var pointmesh = st.commit()
 		$PointMesh.mesh = pointmesh
-
+	
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
