@@ -152,35 +152,117 @@ static func setvecstobonesG(ibR, ib0, p1, p2, p3, p4, ovrhandrestdata, ovrhandpo
 	#  = (A.basis*B.basis*C.basis, A.origin + A.basis*B.origin + A.basis*B.basis*C.origin)
 
 	# (A*B).origin - A.origin = A.basis*B.origin
+
+const carpallist = [ OpenXRInterface.HAND_JOINT_THUMB_METACARPAL, OpenXRInterface.HAND_JOINT_INDEX_METACARPAL, OpenXRInterface.HAND_JOINT_MIDDLE_METACARPAL, OpenXRInterface.HAND_JOINT_RING_METACARPAL, OpenXRInterface.HAND_JOINT_LITTLE_METACARPAL ]
+
+class SkelHand:
+	var lr
+	var handnode
+	var skel
+	var handtoskeltransform
+	var wristboneindex
+	var wristboneresttransform
+	var hstw
+	var fingerboneindexes
+	var fingerboneresttransforms
 	
-const hand_joint_node_shortnames = [ "hwr", 
-	"ht0", "ht1", "ht2", "ht3",
-	"hi0", "hi1", "hi2", "hi3", "hi4", 
-	"hm0", "hm1", "hm2", "hm3", "hm4", 
-	"hr0", "hr1", "hr2", "hr3", "hr4", 
-	"hl0", "hl1", "hl2", "hl3", "hl4" ] 
+	func extractrestfingerbones(lhandnode, hand):
+		handnode = lhandnode
+		print(handnode.name)
+		skel = handnode.find_child("Skeleton3D")
+		lr = "L" if hand == 0 else "R"
+		handtoskeltransform = handnode.global_transform.inverse()*skel.global_transform
+		wristboneindex = skel.find_bone("Wrist_" + lr)
+		wristboneresttransform = skel.get_bone_rest(wristboneindex)
+		hstw = handtoskeltransform * wristboneresttransform
+		fingerboneindexes = [ ]
+		fingerboneresttransforms = [ ]
+		for f in ["Thumb", "Index", "Middle", "Ring", "Little"]:
+			fingerboneindexes.push_back([ ])
+			fingerboneresttransforms.push_back([ ])
+			for b in ["Metacarpal", "Proximal", "Intermediate", "Distal", "Tip"]:
+				var name = f + "_" + b + "_" + lr
+				var ix = skel.find_bone(name)
+				if ix != -1:
+					fingerboneindexes[-1].push_back(ix)
+					fingerboneresttransforms[-1].push_back(skel.get_bone_rest(ix) if ix != -1 else null)
+				else:
+					assert (f == "Thumb" and b == "Intermediate")
 
-var fingerboneindexes = [ ]
-var fingerboneresttransforms = [ ]
-var wristboneindex = null
-var wristboneresttransform = null
-var fingerbonetransformsOut = [ ]
+	func calchandnodetransform(oxrjps, xrorigintransform, ss):
+		var xrt = handnode.get_parent().global_transform.inverse()*xrorigintransform
+		
+		# solve for handnodetransform where
+		# avatarwristtrans = handnode.get_parent().global_transform * handnodetransform * handtoskeltransform * wristboneresttransform
+		# avatarwristpos = avatarwristtrans.origin
+		# avatarmiddleknucklepos = avatarwristtrans * fingerboneresttransforms[2][0] * fingerboneresttransforms[2][1]
+		# handwrist = xrorigintransform * oxrjps[OpenXRInterface.HAND_JOINT_WRIST]
+		# handmiddleknuckle = xrorigintransform * oxrjps[OpenXRInterface.HAND_JOINT_MIDDLE_PROXIMAL]
+		#  so that avatarwristpos->avatarmiddleknucklepos is aligned along handwrist->handmiddleknuckle
+		#  and rotated so that the line between index and ring knuckles are in the same plane
+		
+		# We want skel.global_transform*wristboneresttransform to have origin xrorigintransform*gg[OpenXRInterface.HAND_JOINT_WRIST].origin
+		var wristorigin = xrt*oxrjps[OpenXRInterface.HAND_JOINT_WRIST]
 
-func extractfingerbones(skel, lr):
-	wristboneindex = skel.find_bone("Wrist_" + lr)
-	wristboneresttransform = skel.get_bone_rest(wristboneindex)
-	for f in ["Thumb", "Index", "Middle", "Ring", "Little"]:
-		fingerboneindexes.push_back([ ])
-		fingerboneresttransforms.push_back([ ])
-		for b in ["Metacarpal", "Proximal", "Intermediate", "Distal", "Tip"]:
-			var name = f + "_" + b + "_" + lr
-			var ix = skel.find_bone(name)
-			if ix != -1:
-				fingerboneindexes[-1].push_back(ix)
-				fingerboneresttransforms[-1].push_back(skel.get_bone_rest(ix) if ix != -1 else null)
-			else:
-				print("skipping ", name)
-	fingerbonetransformsOut = fingerboneresttransforms.duplicate(true)
+		var middleknuckle = xrt*oxrjps[OpenXRInterface.HAND_JOINT_MIDDLE_PROXIMAL]
+		var leftknuckle = xrt*oxrjps[OpenXRInterface.HAND_JOINT_RING_PROXIMAL if lr == "L" else OpenXRInterface.HAND_JOINT_INDEX_PROXIMAL]
+		var rightknuckle = xrt*oxrjps[OpenXRInterface.HAND_JOINT_INDEX_PROXIMAL if lr == "L" else OpenXRInterface.HAND_JOINT_RING_PROXIMAL]
+
+		var middlerestreltransform = fingerboneresttransforms[2][0] * fingerboneresttransforms[2][1]
+		var leftrestreltransform = fingerboneresttransforms[3 if lr == "L" else 1][0] * fingerboneresttransforms[3 if lr == "L" else 1][1]
+		var rightrestreltransform = fingerboneresttransforms[1 if lr == "L" else 3][0] * fingerboneresttransforms[1 if lr == "L" else 3][1]
+		
+		var m2g1 = middlerestreltransform
+		var skelmiddleknuckle = handnode.transform * hstw * middlerestreltransform
+
+		var m2g1g3 = leftrestreltransform.origin - rightrestreltransform.origin
+		var hnbasis = ss.rotationtoalignB(hstw.basis*m2g1.origin, middleknuckle - wristorigin, 
+									   hstw.basis*m2g1g3, leftknuckle - rightknuckle)
+		var hnorigin = wristorigin - hnbasis*hstw.origin
+
+		return Transform3D(hnbasis, hnorigin)
+
+
+	func calcboneposes(oxrjps, handnodetransform, xrorigintransform, ss):
+		var xrt = handnode.get_parent().global_transform.inverse()*xrorigintransform
+#		var kpositions = trackedfingerpositions(xrt, gg)
+		var fingerbonetransformsOut = fingerboneresttransforms.duplicate(true)
+		for f in range(5):
+			var mfg = handnodetransform * hstw
+			# (A.basis, A.origin) * (B.basis, B.origin) = (A.basis*B.basis, A.origin + A.basis*B.origin)
+			for i in range(len(fingerboneresttransforms[f])-1):
+				mfg = mfg*fingerboneresttransforms[f][i]
+				# (tIbasis,atIorigin)*fingerboneresttransforms[f][i+1]).origin = mfg.inverse()*kpositions[f][i+1]
+				# tIbasis*fingerboneresttransforms[f][i+1] = mfg.inverse()*kpositions[f][i+1] - atIorigin
+				var atIorigin = Vector3(0,0,0)  
+				var kpositionsfip1 = xrt*oxrjps[ss.carpallist[f] + i+1]
+				var tIbasis = ss.rotationtoalignScaled(fingerboneresttransforms[f][i+1].origin, mfg.affine_inverse()*kpositionsfip1 - atIorigin)
+				var tIorigin = mfg.affine_inverse()*kpositionsfip1 - tIbasis*fingerboneresttransforms[f][i+1].origin # should be 0
+				var tI = Transform3D(tIbasis, tIorigin)
+				fingerbonetransformsOut[f][i] = fingerboneresttransforms[f][i]*tI
+				mfg = mfg*tI
+		return fingerbonetransformsOut
+
+	func copyouttransformstoskel(fingerbonetransformsOut):
+		for f in range(len(fingerboneindexes)):
+			for i in range(len(fingerboneindexes[f])):
+				var ix = fingerboneindexes[f][i]
+				var t = fingerbonetransformsOut[f][i]
+				skel.set_bone_pose_position(ix, t.origin)
+				skel.set_bone_pose_rotation(ix, t.basis.get_rotation_quaternion())
+				skel.set_bone_pose_scale(ix, t.basis.get_scale())
+
+
+func getoxrjointpositions(xr_interface, hand):
+	var oxrjps = [ ]
+	for j in range(OpenXRInterface.HAND_JOINT_MAX):
+		oxrjps.push_back(xr_interface.get_hand_joint_position(hand, j))
+	return oxrjps
+
+
+
+
+var fingerbonetransformsOut
 
 func trackedfingerpositions(xrt, gg):
 	var kpositions = [ ]
@@ -190,82 +272,58 @@ func trackedfingerpositions(xrt, gg):
 			kpositions[-1].push_back(xrt * gg[f+i].origin)
 	return kpositions
 
-func copyouttransformstoskel(skel):
-	for f in range(len(fingerboneindexes)):
-		for i in range(len(fingerboneindexes[f])):
-			var ix = fingerboneindexes[f][i]
+func copyouttransformstoskel(skel, skelhand):
+	for f in range(len(skelhand.fingerboneindexes)):
+		for i in range(len(skelhand.fingerboneindexes[f])):
+			var ix = skelhand.fingerboneindexes[f][i]
 			var t = fingerbonetransformsOut[f][i]
 			skel.set_bone_pose_position(ix, t.origin)
 			skel.set_bone_pose_rotation(ix, t.basis.get_rotation_quaternion())
 			skel.set_bone_pose_scale(ix, t.basis.get_scale())
 
-
-var wristtransinverse = null
-var restboneposeindexknuckle = null
-var handtoskeltransform = null
-
+var skelhandleft = null
 func tracklefthand(gg, xrorigintransform):
 	ovrlefthandtrack(gg)
-
+	var oxrjps = [ ]
+	for j in range(OpenXRInterface.HAND_JOINT_MAX):
+		oxrjps.push_back(gg[j].origin)
+	
 	var handnode = $Hand_Glove_L
-	var skel = $Hand_Glove_L/Armature/Skeleton3D
-	if not fingerboneindexes:
-		extractfingerbones(skel, "L")
-		handtoskeltransform = handnode.global_transform.inverse()*skel.global_transform
-	
-	# We need to find a value for handnode.transform that brings the hand into position and alignment
-	# Now, skel.global_transform = handnode.get_parent().global_transform * handnode.transform * handtoskeltransform
-	# We want skel.global_transform*wristboneresttransform to have origin xrorigintransform*gg[OpenXRInterface.HAND_JOINT_WRIST].origin
+	if skelhandleft == null:
+		skelhandleft = SkelHand.new()
+		skelhandleft.extractrestfingerbones(handnode, 0)
+		fingerbonetransformsOut = skelhandleft.fingerboneresttransforms.duplicate(true)
+
+	var skelhand = skelhandleft
 	var xrt = handnode.get_parent().global_transform.inverse()*xrorigintransform
-	
+	var handnodetransform = skelhand.calchandnodetransform(oxrjps, xrorigintransform, self)
+
 	var kpositions = trackedfingerpositions(xrt, gg)
-	
-	# We want skel.global_transform*wristboneresttransform to have origin xrorigintransform*gg[OpenXRInterface.HAND_JOINT_WRIST].origin
-	var wristorigin = (xrt*gg[OpenXRInterface.HAND_JOINT_WRIST]).origin
-	var hstw = handtoskeltransform * wristboneresttransform
-	# (hn.basis, hn.origin) * (hstw.basis, hstw.origin) = wristorigin
-
-	var middleknuckle = kpositions[2][1]
-
-	var m2g1 = fingerboneresttransforms[2][0] * fingerboneresttransforms[2][1]
-	var skelmiddleknuckle = handnode.transform * hstw * m2g1
-
-	var m2g1g3 = (fingerboneresttransforms[3][0] * fingerboneresttransforms[3][1]).origin - (fingerboneresttransforms[1][0] * fingerboneresttransforms[1][1]).origin
-
-	# handnode.transform * hstw * 
-	
-	# make skelmiddleknuckle - skelwrist parallel to middleknuckle - wristorigin
-	# (A*B).origin - A.origin = A.basis*B.origin
-	# skelmiddleknucklevec = hnbasis * hstw.basis * m2g1.origin
-	# rotationtoalign(a, b)*a = b
-	var hnbasis = rotationtoalignB(hstw.basis*m2g1.origin, middleknuckle - wristorigin, 
-								   hstw.basis*m2g1g3, kpositions[3][1] - kpositions[1][1])
-
-
-	# use rotationtoalignB
-	var hnorigin = wristorigin - hnbasis*hstw.origin
-	var handnodetransform = Transform3D(hnbasis, hnorigin)
-
 	for f in range(5):
-		var mfg = handnodetransform * hstw
+		var mfg = handnodetransform * skelhand.hstw
 
 		# need to apply a transform t0 such that
 		# mfg*t0*fingerboneresttransforms[f][1].origin = kpositions[f][1]
 		# t0origin + t0basis*fingerboneresttransforms[f][1].origin = mfg.inverse()*xrt*gg[OpenXRInterface.HAND_JOINT_MIDDLE_PROXIMAL]).origin
-		for i in range(len(fingerboneresttransforms[f])-1):
-			mfg = mfg*fingerboneresttransforms[f][i]
-			var atIorigin = Vector3(0,0,0)
-			var tIbasis = rotationtoalignScaled(fingerboneresttransforms[f][i+1].origin, (mfg.inverse()*kpositions[f][i+1] - atIorigin))
-			tIbasis = rotationtoalign(fingerboneresttransforms[f][i+1].origin, (mfg.inverse()*kpositions[f][i+1] - atIorigin))
-			var tIorigin = mfg.inverse()*kpositions[f][i+1] - tIbasis*fingerboneresttransforms[f][i+1].origin # should be 0
-			print(tIorigin, tIbasis.get_scale())
-			var tI = Transform3D(tIbasis, tIorigin)
-			fingerbonetransformsOut[f][i] = fingerboneresttransforms[f][i]*tI
-			mfg = mfg*tI
 
+		# (A.basis, A.origin) * (B.basis, B.origin) = (A.basis*B.basis, A.origin + A.basis*B.origin)
+
+		for i in range(len(skelhand.fingerboneresttransforms[f])-1):
+			mfg = mfg*skelhand.fingerboneresttransforms[f][i]
 			
+			# (tIbasis,atIorigin)*fingerboneresttransforms[f][i+1]).origin = mfg.inverse()*kpositions[f][i+1]
+			# tIbasis*fingerboneresttransforms[f][i+1] = mfg.inverse()*kpositions[f][i+1] - atIorigin
+			var atIorigin = Vector3(0,0,0)
+			var tIbasis = rotationtoalignScaled(skelhand.fingerboneresttransforms[f][i+1].origin, mfg.affine_inverse()*kpositions[f][i+1] - atIorigin)
+			var tIorigin = mfg.affine_inverse()*kpositions[f][i+1] - tIbasis*skelhand.fingerboneresttransforms[f][i+1].origin # should be 0
+			var tI = Transform3D(tIbasis, tIorigin)
+			fingerbonetransformsOut[f][i] = skelhand.fingerboneresttransforms[f][i]*tI
+			mfg = mfg*tI
+			
+	fingerbonetransformsOut = skelhand.calcboneposes(oxrjps, handnodetransform, xrorigintransform, self)
 	handnode.transform = handnodetransform
-	copyouttransformstoskel(skel)
+	#copyouttransformstoskel(skelhand.skel, skelhand)
+	skelhand.copyouttransformstoskel(fingerbonetransformsOut)
 
 	return
 

@@ -316,6 +316,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.15933, -1.20719)
 [node name="Skeleton3D" parent="XROrigin3D/Autohands/Hand_Glove_L/Armature" index="0"]
 bones/8/position = Vector3(0.000474975, 0.031475, 0.000474975)
 bones/8/rotation = Quaternion(0.014475, -0.011525, -0.134525, 0.990475)
+bones/8/scale = Vector3(1.00048, 1.00048, 1.00048)
 bones/9/position = Vector3(0.000474975, 0.027475, 0.000474975)
 bones/25/position = Vector3(0.030475, 0.067475, -0.042525)
 
@@ -438,3 +439,4 @@ size = Vector3(3, 3, 3)
 [connection signal="broker_connection_failed" from="MQTT" to="." method="_on_mqtt_broker_connection_failed"]
 
 [editable path="XROrigin3D/Autohands/Hand_Glove_L"]
+[editable path="XROrigin3D/Autohands/Hand_Glove_R"]
